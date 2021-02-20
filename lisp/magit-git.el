@@ -1725,7 +1725,7 @@ SORTBY is a key or list of keys to pass to the `--sort' flag of
 PATH has to be relative to the super-repository."
   (magit-git-string "submodule--helper" "name" path))
 
-(defun magit-list-worktrees ()
+(defun magit-list-worktrees () ; FIXME support tramp
   (let (worktrees worktree)
     (dolist (line (let ((magit-git-global-arguments
                          ;; KLUDGE At least in v2.8.3 this triggers a segfault.
