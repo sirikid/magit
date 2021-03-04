@@ -290,9 +290,10 @@ Enter passphrase for key '/home/user/.ssh/id_rsa': "
 
 (defun magit-test-get-section (list file)
   (magit-status-internal default-directory)
-  (--first (equal (oref it value) file)
-           (oref (magit-get-section `(,list (status)))
-                 children)))
+  (seq-find (lambda (it)
+              (equal (oref it value) file))
+            (oref (magit-get-section `(,list (status)))
+                  children)))
 
 (ert-deftest magit-status:file-sections ()
   (magit-with-test-repository
