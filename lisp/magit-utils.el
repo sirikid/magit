@@ -488,11 +488,11 @@ acts similarly to `completing-read', except for the following:
   `magit-builtin-completing-read'."
   (setq magit-completing-read--silent-default nil)
   (if-let ((dwim (and def
-                      (nth 2 (-first (pcase-lambda (`(,cmd ,re ,_))
-                                       (and (eq this-command cmd)
-                                            (or (not re)
-                                                (string-match-p re prompt))))
-                                     magit-dwim-selection)))))
+                      (nth 2 (seq-find (pcase-lambda (`(,cmd ,re ,_))
+                                         (and (eq this-command cmd)
+                                              (or (not re)
+                                                  (string-match-p re prompt))))
+                                       magit-dwim-selection)))))
       (if (eq dwim 'ask)
           (if (y-or-n-p (format "%s %s? " prompt def))
               def
@@ -700,7 +700,9 @@ This is similar to `read-string', but
                                      ", ")
                           ,(if verbose ", or [C-g] to abort " " "))
                   ',(mapcar #'car clauses))
-            ,@(--map `(,(car it) ,@(cddr it)) clauses))
+            ,@(mapcar (lambda (it)
+                        `(,(car it) ,@(cddr it)))
+                      clauses))
      (message "")))
 
 (defun magit-y-or-n-p (prompt &optional action)
@@ -822,7 +824,9 @@ as STRING."
         (i 0))
     `(let ((,s ,string))
        (let ,(save-match-data
-               (--map (list it (list 'match-string (cl-incf i) s)) varlist))
+               (mapcar (lambda (it)
+                         `(,it (match-string ,(cl-incf i) ,s)))
+                       varlist))
          ,@body))))
 
 (defun magit-delete-line ()
@@ -1157,7 +1161,9 @@ See <https://github.com/raxod502/straight.el/issues/520>."
 Like `message', except that if the users configured option
 `magit-no-message' to prevent the message corresponding to
 FORMAT-STRING to be displayed, then don't."
-  (unless (--first (string-prefix-p it format-string) magit-no-message)
+  (unless (seq-find (lambda (it)
+                      (string-prefix-p it format-string))
+                    magit-no-message)
     (apply #'message format-string args)))
 
 (defun magit-msg (format-string &rest args)
