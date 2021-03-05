@@ -336,7 +336,7 @@ depending on the value of option `magit-commit-squash-confirm'."
               (magit-with-editor
                 (magit-call-git
                  "commit" "--no-gpg-sign"
-                 (-remove-first
+                 (seq-remove
                   (apply-partially #'string-match-p "\\`--gpg-sign=")
                   args)))
             (magit-run-git-with-editor "commit" args))
@@ -358,7 +358,7 @@ depending on the value of option `magit-commit-squash-confirm'."
           (apply #'magit-diff-staged nil (magit-diff-arguments)))))))
 
 (defun magit-commit-amend-assert (&optional commit)
-  (--when-let (magit-list-publishing-branches commit)
+  (when-let ((it (magit-list-publishing-branches commit)))
     (let ((m1 "This commit has already been published to ")
           (m2 ".\nDo you really want to modify it"))
       (magit-confirm 'amend-published
@@ -598,10 +598,11 @@ See `magit-commit-absorb' for an alternative implementation."
 (defun magit-commit-message-buffer ()
   (let* ((find-file-visit-truename t) ; git uses truename of COMMIT_EDITMSG
          (topdir (magit-toplevel)))
-    (--first (equal topdir (with-current-buffer it
-                             (and git-commit-mode (magit-toplevel))))
-             (append (buffer-list (selected-frame))
-                     (buffer-list)))))
+    (seq-find (lambda (it)
+                (equal topdir (with-current-buffer it
+                                (and git-commit-mode (magit-toplevel)))))
+              (append (buffer-list (selected-frame))
+                      (buffer-list)))))
 
 (defvar magit-commit-add-log-insert-function 'magit-commit-add-log-insert
   "Used by `magit-commit-add-log' to insert a single entry.")

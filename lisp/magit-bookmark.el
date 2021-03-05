@@ -49,15 +49,16 @@ and the buffer-local values of the variables referenced in its
           (bookmark-prop-set bookmark var (symbol-value var)))
         (bookmark-prop-set
          bookmark 'magit-hidden-sections
-         (--keep (and (oref it hidden)
-                      (cons (oref it type)
-                            (if (derived-mode-p 'magit-stash-mode)
-                                (replace-regexp-in-string
-                                 (regexp-quote magit-buffer-revision)
-                                 magit-buffer-revision-hash
-                                 (oref it value))
-                              (oref it value))))
-                 (oref magit-root-section children)))
+         (remq nil (seq-map (lambda (it)
+                              (and (oref it hidden)
+                                   (cons (oref it type)
+                                         (if (derived-mode-p 'magit-stash-mode)
+                                             (replace-regexp-in-string
+                                              (regexp-quote magit-buffer-revision)
+                                              magit-buffer-revision-hash
+                                              (oref it value))
+                                           (oref it value)))))
+                            (oref magit-root-section children))))
         bookmark)
     (user-error "Bookmarking is not implemented for %s buffers" major-mode)))
 
@@ -73,8 +74,9 @@ with the variables' values as arguments, which were recorded by
                       (magit-display-buffer-noselect t))
                   (apply (intern (format "%s-setup-buffer"
                                          (substring (symbol-name mode) 0 -5)))
-                         (--map (bookmark-prop-get bookmark it)
-                                (get mode 'magit-bookmark-variables))))))
+                         (seq-map (lambda (it)
+                                    (bookmark-prop-get bookmark it))
+                                  (get mode 'magit-bookmark-variables))))))
     (set-buffer buffer) ; That is the interface we have to adhere to.
     (when-let ((hidden (bookmark-prop-get bookmark 'magit-hidden-sections)))
       (with-current-buffer buffer
